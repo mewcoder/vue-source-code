@@ -1,0 +1,5 @@
+[build]
+  command = "yarn run docs:build"
+  ignore = "./scripts/docs-check.sh"
+  publish = "docs/.vitepress/dist"
+
