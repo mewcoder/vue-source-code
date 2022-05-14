@@ -11,33 +11,14 @@
 <body>
   <div id="app">
     {{message}}
-    <p v-for="item in items">{{item}}</p>
-    {{a}}
   </div>
-  <script src="./vue2.js"></script>
+  <script src="../vue-2.6.14/dist/vue.js"></script>
   <script>
-    // Vue.mixin({
-    //   data:{
-    //       message: 'hello'
-    //     }
-    // });
     new Vue({
       el: '#app',
       data: {
         message: '11111',
-        items: ['a', 'b', 'c']
-      },
-      mixins: [{
-        data: {
-          message: 'hello111',
-          a: '2222222222222222222'
-        }
-      }],
-      mounted() {
-        setTimeout(() => {
-          this.items.splice(1, 0, 'd')
-        }, 1000)
-      },
+      }
     })
 
   </script>

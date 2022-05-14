@@ -1,1 +1,2 @@
 - 源地址：https://github.com/vuejs/vue/tree/v2.6.14
+- 执行`npm run dev` 生成 dist/vue.js 方便调试
