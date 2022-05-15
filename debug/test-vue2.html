@@ -10,15 +10,53 @@
 
 <body>
   <div id="app">
-    {{message}}
+    {{aa}}
+    <my></my>
   </div>
-  <script src="../vue-2.6.14/dist/vue.js"></script>
+  <!-- <script src="../vue-2.6.14/dist/vue.js"></script> -->
+  <script src="./vue2.js"></script>
   <script>
+    Vue.component('my', {
+      template: '<button>点我</button>',
+      date() {
+        return {
+          aa: '我是组件'
+        }
+      }
+    });
     new Vue({
       el: '#app',
       data: {
-        message: '11111',
-      }
+        a: '11111',
+        b: {
+          c: '22222'
+        }
+      },
+      computed: {
+        aa: function () {
+          return this.a
+        }
+      },
+      // watch: {
+      //   a: function (newVal, oldVal) {
+      //     console.log(newVal, oldVal);
+      //   }
+      // },
+      mounted() {
+        // console.log('mounted');
+        debugger
+        // setTimeout(() => {
+        //   this.a.b = {
+        //     c: 'c'
+        //   }
+        //   this.$set(this.a, 'd', '4444');
+        // }, 3000);
+      },
+      updated() {
+        console.log('updated');
+        console.log(this.a);
+      },
+
     })
 
   </script>
