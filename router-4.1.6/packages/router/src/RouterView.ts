@@ -148,7 +148,7 @@ export const RouterViewImpl = /*#__PURE__*/ defineComponent({
       }
 
       // props from route configuration
-      const routePropsOption = matchedRoute.props[currentName]
+      const routePropsOption = matchedRoute!.props[currentName]
       const routeProps = routePropsOption
         ? routePropsOption === true
           ? route.params
@@ -160,7 +160,7 @@ export const RouterViewImpl = /*#__PURE__*/ defineComponent({
       const onVnodeUnmounted: VNodeProps['onVnodeUnmounted'] = vnode => {
         // remove the instance reference to prevent leak
         if (vnode.component!.isUnmounted) {
-          matchedRoute.instances[currentName] = null
+          matchedRoute!.instances[currentName] = null
         }
       }
 
@@ -180,9 +180,9 @@ export const RouterViewImpl = /*#__PURE__*/ defineComponent({
         // TODO: can display if it's an alias, its props
         const info: RouterViewDevtoolsContext = {
           depth: depth.value,
-          name: matchedRoute.name,
-          path: matchedRoute.path,
-          meta: matchedRoute.meta,
+          name: matchedRoute!.name,
+          path: matchedRoute!.path,
+          meta: matchedRoute!.meta,
         }
 
         const internalInstances = isArray(component.ref)
