@@ -4,7 +4,7 @@ import { baseWarn, getAndRemoveAttr, getBindingAttr } from '../../../../compiler
 function transformNode(el, options) {
     const warn = options.warn || baseWarn;
     const staticClass = getAndRemoveAttr(el, 'class');
-    if (process.env.NODE_ENV !== 'production' && staticClass) {
+    if (staticClass) {
         const res = parseText(staticClass, options.delimiters);
         if (res) {
             warn(`class="${staticClass}": ` +

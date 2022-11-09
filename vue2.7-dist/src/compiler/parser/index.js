@@ -1,9 +1,9 @@
-import he from '../../../node_modules/.pnpm/he@1.2.0/node_modules/he/he.js';
+import he from './entity-decoder.js';
 import { parseHTML } from './html-parser.js';
 import { parseText } from './text-parser.js';
 import { parseFilters } from './filter-parser.js';
 import { genAssignmentCode } from '../directives/model.js';
-import { cached, extend, camelize, hyphenate, no } from '../../shared/util.js';
+import { extend, camelize, hyphenate, no, cached } from '../../shared/util.js';
 import { isIE, isEdge, isServerRendering } from '../../core/util/env.js';
 import { getBindingAttr, getRawBindingAttr, getAndRemoveAttr, addAttr, getAndRemoveAttrByRegex, addHandler, addProp, addDirective, baseWarn, pluckModuleFunction } from '../helpers.js';
 
@@ -83,7 +83,7 @@ function parse(template, options) {
         if (!stack.length && element !== root) {
             // allow root elements with v-if, v-else-if and v-else
             if (root.if && (element.elseif || element.else)) {
-                if (process.env.NODE_ENV !== 'production') {
+                {
                     checkRootConstraints(element);
                 }
                 addIfCondition(root, {
@@ -91,7 +91,7 @@ function parse(template, options) {
                     block: element
                 });
             }
-            else if (process.env.NODE_ENV !== 'production') {
+            else {
                 warnOnce(`Component template should contain exactly one root element. ` +
                     `If you are using v-if on multiple elements, ` +
                     `use v-else-if to chain them instead.`, { start: element.start });
@@ -173,7 +173,7 @@ function parse(template, options) {
             if (ns) {
                 element.ns = ns;
             }
-            if (process.env.NODE_ENV !== 'production') {
+            {
                 if (options.outputSourceRange) {
                     element.start = start;
                     element.end = end;
@@ -196,8 +196,7 @@ function parse(template, options) {
             }
             if (isForbiddenTag(element) && !isServerRendering()) {
                 element.forbidden = true;
-                process.env.NODE_ENV !== 'production' &&
-                    warn('Templates should only be responsible for mapping the state to the ' +
+                warn('Templates should only be responsible for mapping the state to the ' +
                         'UI. Avoid placing tags with side-effects in your templates, such as ' +
                         `<${tag}>` +
                         ', as they will not be parsed.', { start: element.start });
@@ -226,7 +225,7 @@ function parse(template, options) {
             }
             if (!root) {
                 root = element;
-                if (process.env.NODE_ENV !== 'production') {
+                {
                     checkRootConstraints(root);
                 }
             }
@@ -243,14 +242,14 @@ function parse(template, options) {
             // pop stack
             stack.length -= 1;
             currentParent = stack[stack.length - 1];
-            if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
+            if (options.outputSourceRange) {
                 element.end = end;
             }
             closeElement(element);
         },
         chars(text, start, end) {
             if (!currentParent) {
-                if (process.env.NODE_ENV !== 'production') {
+                {
                     if (text === template) {
                         warnOnce('Component template requires a root element, rather than just text.', { start });
                     }
@@ -316,7 +315,7 @@ function parse(template, options) {
                     };
                 }
                 if (child) {
-                    if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
+                    if (options.outputSourceRange) {
                         child.start = start;
                         child.end = end;
                     }
@@ -333,7 +332,7 @@ function parse(template, options) {
                     text,
                     isComment: true
                 };
-                if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
+                if (options.outputSourceRange) {
                     child.start = start;
                     child.end = end;
                 }
@@ -388,7 +387,7 @@ function processElement(element, options) {
 function processKey(el) {
     const exp = getBindingAttr(el, 'key');
     if (exp) {
-        if (process.env.NODE_ENV !== 'production') {
+        {
             if (el.tag === 'template') {
                 warn(`<template> cannot be keyed. Place the key on real elements instead.`, getRawBindingAttr(el, 'key'));
             }
@@ -421,7 +420,7 @@ function processFor(el) {
         if (res) {
             extend(el, res);
         }
-        else if (process.env.NODE_ENV !== 'production') {
+        else {
             warn(`Invalid v-for expression: ${exp}`, el.rawAttrsMap['v-for']);
         }
     }
@@ -473,7 +472,7 @@ function processIfConditions(el, parent) {
             block: el
         });
     }
-    else if (process.env.NODE_ENV !== 'production') {
+    else {
         warn(`v-${el.elseif ? 'else-if="' + el.elseif + '"' : 'else'} ` +
             `used on element <${el.tag}> without corresponding v-if.`, el.rawAttrsMap[el.elseif ? 'v-else-if' : 'v-else']);
     }
@@ -485,7 +484,7 @@ function findPrevElement(children) {
             return children[i];
         }
         else {
-            if (process.env.NODE_ENV !== 'production' && children[i].text !== ' ') {
+            if (children[i].text !== ' ') {
                 warn(`text "${children[i].text.trim()}" between v-if and v-else(-if) ` +
                     `will be ignored.`, children[i]);
             }
@@ -512,7 +511,7 @@ function processSlotContent(el) {
     if (el.tag === 'template') {
         slotScope = getAndRemoveAttr(el, 'scope');
         /* istanbul ignore if */
-        if (process.env.NODE_ENV !== 'production' && slotScope) {
+        if (slotScope) {
             warn(`the "scope" attribute for scoped slots have been deprecated and ` +
                 `replaced by "slot-scope" since 2.5. The new "slot-scope" attribute ` +
                 `can also be used on plain elements in addition to <template> to ` +
@@ -522,7 +521,7 @@ function processSlotContent(el) {
     }
     else if ((slotScope = getAndRemoveAttr(el, 'slot-scope'))) {
         /* istanbul ignore if */
-        if (process.env.NODE_ENV !== 'production' && el.attrsMap['v-for']) {
+        if (el.attrsMap['v-for']) {
             warn(`Ambiguous combined usage of slot-scope and v-for on <${el.tag}> ` +
                 `(v-for takes higher priority). Use a wrapper <template> for the ` +
                 `scoped slot to make it clearer.`, el.rawAttrsMap['slot-scope'], true);
@@ -546,7 +545,7 @@ function processSlotContent(el) {
             // v-slot on <template>
             const slotBinding = getAndRemoveAttrByRegex(el, slotRE);
             if (slotBinding) {
-                if (process.env.NODE_ENV !== 'production') {
+                {
                     if (el.slotTarget || el.slotScope) {
                         warn(`Unexpected mixed usage of different slot syntaxes.`, el);
                     }
@@ -565,7 +564,7 @@ function processSlotContent(el) {
             // v-slot on component, denotes default slot
             const slotBinding = getAndRemoveAttrByRegex(el, slotRE);
             if (slotBinding) {
-                if (process.env.NODE_ENV !== 'production') {
+                {
                     if (!maybeComponent(el)) {
                         warn(`v-slot can only be used on components or <template>.`, slotBinding);
                     }
@@ -604,7 +603,7 @@ function getSlotName(binding) {
         if (binding.name[0] !== '#') {
             name = 'default';
         }
-        else if (process.env.NODE_ENV !== 'production') {
+        else {
             warn(`v-slot shorthand syntax requires a slot name.`, binding);
         }
     }
@@ -618,7 +617,7 @@ function getSlotName(binding) {
 function processSlotOutlet(el) {
     if (el.tag === 'slot') {
         el.slotName = getBindingAttr(el, 'name');
-        if (process.env.NODE_ENV !== 'production' && el.key) {
+        if (el.key) {
             warn(`\`key\` does not work on <slot> because slots are abstract outlets ` +
                 `and can possibly expand into multiple elements. ` +
                 `Use the key on a wrapping element instead.`, getRawBindingAttr(el, 'key'));
@@ -657,7 +656,7 @@ function processAttrs(el) {
                 if (isDynamic) {
                     name = name.slice(1, -1);
                 }
-                if (process.env.NODE_ENV !== 'production' && value.trim().length === 0) {
+                if (value.trim().length === 0) {
                     warn(`The value for a v-bind expression cannot be empty. Found in "v-bind:${name}"`);
                 }
                 if (modifiers) {
@@ -716,14 +715,14 @@ function processAttrs(el) {
                     }
                 }
                 addDirective(el, name, rawName, value, arg, isDynamic, modifiers, list[i]);
-                if (process.env.NODE_ENV !== 'production' && name === 'model') {
+                if (name === 'model') {
                     checkForAliasModel(el, value);
                 }
             }
         }
         else {
             // literal attribute
-            if (process.env.NODE_ENV !== 'production') {
+            {
                 const res = parseText(value, delimiters);
                 if (res) {
                     warn(`${name}="${value}": ` +
@@ -766,7 +765,7 @@ function parseModifiers(name) {
 function makeAttrsMap(attrs) {
     const map = {};
     for (let i = 0, l = attrs.length; i < l; i++) {
-        if (process.env.NODE_ENV !== 'production' && map[attrs[i].name] && !isIE && !isEdge) {
+        if (map[attrs[i].name] && !isIE && !isEdge) {
             warn('duplicate attribute: ' + attrs[i].name, attrs[i]);
         }
         map[attrs[i].name] = attrs[i].value;

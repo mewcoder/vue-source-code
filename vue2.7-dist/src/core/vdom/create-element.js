@@ -30,8 +30,7 @@ function createElement(context, tag, data, children, normalizationType, alwaysNo
 }
 function _createElement(context, tag, data, children, normalizationType) {
     if (isDef(data) && isDef(data.__ob__)) {
-        process.env.NODE_ENV !== 'production' &&
-            warn(`Avoid using observed data object as vnode data: ${JSON.stringify(data)}\n` + 'Always create fresh vnode data objects in each render!', context);
+        warn(`Avoid using observed data object as vnode data: ${JSON.stringify(data)}\n` + 'Always create fresh vnode data objects in each render!', context);
         return createEmptyVNode();
     }
     // object syntax in v-bind
@@ -43,7 +42,7 @@ function _createElement(context, tag, data, children, normalizationType) {
         return createEmptyVNode();
     }
     // warn against non-primitive key
-    if (process.env.NODE_ENV !== 'production' && isDef(data) && isDef(data.key) && !isPrimitive(data.key)) {
+    if (isDef(data) && isDef(data.key) && !isPrimitive(data.key)) {
         warn('Avoid using non-primitive value as key, ' +
             'use string/number value instead.', context);
     }
@@ -63,7 +62,16 @@ function _createElement(context, tag, data, children, normalizationType) {
     if (typeof tag === 'string') {
         let Ctor;
         ns = (context.$vnode && context.$vnode.ns) || config.getTagNamespace(tag);
-        if ((!data || !data.pre) &&
+        if (config.isReservedTag(tag)) {
+            // platform built-in elements
+            if (isDef(data) &&
+                isDef(data.nativeOn) &&
+                data.tag !== 'component') {
+                warn(`The .native modifier for v-on is only valid on components but it was used on <${tag}>.`, context);
+            }
+            vnode = new VNode(config.parsePlatformTagName(tag), data, children, undefined, undefined, context);
+        }
+        else if ((!data || !data.pre) &&
             isDef((Ctor = resolveAsset(context.$options, 'components', tag)))) {
             // component
             vnode = createComponent(Ctor, data, context, children, tag);

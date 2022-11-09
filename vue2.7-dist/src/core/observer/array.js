@@ -6,7 +6,6 @@ import '../util/debug.js';
 import './dep.js';
 import './traverse.js';
 import './scheduler.js';
-import '../config.js';
 import '../instance/proxy.js';
 import '../util/perf.js';
 import '../vdom/create-functional-component.js';
@@ -49,15 +48,12 @@ methodsToPatch.forEach(function (method) {
         if (inserted)
             ob.observeArray(inserted);
         // notify change
-        if (process.env.NODE_ENV !== 'production') {
+        {
             ob.dep.notify({
                 type: "array mutation" /* TriggerOpTypes.ARRAY_MUTATION */,
                 target: this,
                 key: method
             });
-        }
-        else {
-            ob.dep.notify();
         }
         return result;
     });

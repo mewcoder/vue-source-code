@@ -7,7 +7,7 @@ function bindDynamicKeys(baseObj, values) {
         if (typeof key === 'string' && key) {
             baseObj[values[i]] = values[i + 1];
         }
-        else if (process.env.NODE_ENV !== 'production' && key !== '' && key !== null) {
+        else if (key !== '' && key !== null) {
             // null is a special value for explicitly removing a binding
             warn(`Invalid value for dynamic directive argument (expected string or null): ${key}`, this);
         }

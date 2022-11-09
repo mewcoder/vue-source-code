@@ -7,7 +7,6 @@ import '../observer/dep.js';
 import '../observer/array.js';
 import '../observer/traverse.js';
 import { queueActivatedComponent } from '../observer/scheduler.js';
-import '../config.js';
 import { resolveConstructorOptions } from '../instance/init.js';
 import { createFunctionalComponent } from './create-functional-component.js';
 import { extractPropsFromVNodeData } from './helpers/extract-props.js';
@@ -87,7 +86,7 @@ function createComponent(Ctor, data, context, children, tag) {
     // if at this stage it's not a constructor or an async component factory,
     // reject.
     if (typeof Ctor !== 'function') {
-        if (process.env.NODE_ENV !== 'production') {
+        {
             warn(`Invalid Component definition: ${String(Ctor)}`, context);
         }
         return;
@@ -97,7 +96,7 @@ function createComponent(Ctor, data, context, children, tag) {
     // @ts-expect-error
     if (isUndef(Ctor.cid)) {
         asyncFactory = Ctor;
-        Ctor = resolveAsyncComponent(asyncFactory);
+        Ctor = resolveAsyncComponent(asyncFactory, baseCtor);
         if (Ctor === undefined) {
             // return a placeholder node for async component, which is rendered
             // as a comment node but preserves all the raw information for the node.

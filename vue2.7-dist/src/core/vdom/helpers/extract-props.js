@@ -6,7 +6,6 @@ import '../../observer/dep.js';
 import '../../observer/array.js';
 import '../../observer/traverse.js';
 import '../../observer/scheduler.js';
-import '../../config.js';
 import '../../instance/proxy.js';
 import '../../util/perf.js';
 import '../create-functional-component.js';
@@ -25,7 +24,7 @@ function extractPropsFromVNodeData(data, Ctor, tag) {
     if (isDef(attrs) || isDef(props)) {
         for (const key in propOptions) {
             const altKey = hyphenate(key);
-            if (process.env.NODE_ENV !== 'production') {
+            {
                 const keyInLowerCase = key.toLowerCase();
                 if (key !== keyInLowerCase && attrs && hasOwn(attrs, keyInLowerCase)) {
                     tip(`Prop "${keyInLowerCase}" is passed to component ` +

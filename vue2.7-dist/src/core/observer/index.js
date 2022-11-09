@@ -1,16 +1,15 @@
 import Dep from './dep.js';
 import VNode from '../vdom/vnode.js';
 import { arrayMethods } from './array.js';
-import { isUndef, isPrimitive, isArray, isValidArrayIndex, hasOwn, isPlainObject, hasChanged, noop } from '../../shared/util.js';
+import { hasOwn, isArray, isPlainObject, hasChanged, isUndef, isPrimitive, isValidArrayIndex, noop } from '../../shared/util.js';
 import { def } from '../util/lang.js';
 import { isServerRendering, hasProto } from '../util/env.js';
 import '../util/options.js';
 import { warn } from '../util/debug.js';
 import { isRef } from '../../v3/reactivity/ref.js';
-import { isReadonly, rawMap } from '../../v3/reactivity/reactive.js';
+import { rawMap, isReadonly } from '../../v3/reactivity/reactive.js';
 import './traverse.js';
 import './scheduler.js';
-import '../config.js';
 import '../instance/proxy.js';
 import '../util/perf.js';
 import '../vdom/create-functional-component.js';
@@ -131,15 +130,12 @@ function defineReactive(obj, key, val, customSetter, shallow, mock) {
         get: function reactiveGetter() {
             const value = getter ? getter.call(obj) : val;
             if (Dep.target) {
-                if (process.env.NODE_ENV !== 'production') {
+                {
                     dep.depend({
                         target: obj,
                         type: "get" /* TrackOpTypes.GET */,
                         key
                     });
-                }
-                else {
-                    dep.depend();
                 }
                 if (childOb) {
                     childOb.dep.depend();
@@ -155,7 +151,7 @@ function defineReactive(obj, key, val, customSetter, shallow, mock) {
             if (!hasChanged(value, newVal)) {
                 return;
             }
-            if (process.env.NODE_ENV !== 'production' && customSetter) {
+            if (customSetter) {
                 customSetter();
             }
             if (setter) {
@@ -173,7 +169,7 @@ function defineReactive(obj, key, val, customSetter, shallow, mock) {
                 val = newVal;
             }
             childOb = !shallow && observe(newVal, false, mock);
-            if (process.env.NODE_ENV !== 'production') {
+            {
                 dep.notify({
                     type: "set" /* TriggerOpTypes.SET */,
                     target: obj,
@@ -182,19 +178,16 @@ function defineReactive(obj, key, val, customSetter, shallow, mock) {
                     oldValue: value
                 });
             }
-            else {
-                dep.notify();
-            }
         }
     });
     return dep;
 }
 function set(target, key, val) {
-    if (process.env.NODE_ENV !== 'production' && (isUndef(target) || isPrimitive(target))) {
+    if ((isUndef(target) || isPrimitive(target))) {
         warn(`Cannot set reactive property on undefined, null, or primitive value: ${target}`);
     }
     if (isReadonly(target)) {
-        process.env.NODE_ENV !== 'production' && warn(`Set operation on key "${key}" failed: target is readonly.`);
+        warn(`Set operation on key "${key}" failed: target is readonly.`);
         return;
     }
     const ob = target.__ob__;
@@ -212,8 +205,7 @@ function set(target, key, val) {
         return val;
     }
     if (target._isVue || (ob && ob.vmCount)) {
-        process.env.NODE_ENV !== 'production' &&
-            warn('Avoid adding reactive properties to a Vue instance or its root $data ' +
+        warn('Avoid adding reactive properties to a Vue instance or its root $data ' +
                 'at runtime - declare it upfront in the data option.');
         return val;
     }
@@ -222,7 +214,7 @@ function set(target, key, val) {
         return val;
     }
     defineReactive(ob.value, key, val, undefined, ob.shallow, ob.mock);
-    if (process.env.NODE_ENV !== 'production') {
+    {
         ob.dep.notify({
             type: "add" /* TriggerOpTypes.ADD */,
             target: target,
@@ -231,10 +223,40 @@ function set(target, key, val) {
             oldValue: undefined
         });
     }
-    else {
-        ob.dep.notify();
-    }
     return val;
+}
+function del(target, key) {
+    if ((isUndef(target) || isPrimitive(target))) {
+        warn(`Cannot delete reactive property on undefined, null, or primitive value: ${target}`);
+    }
+    if (isArray(target) && isValidArrayIndex(key)) {
+        target.splice(key, 1);
+        return;
+    }
+    const ob = target.__ob__;
+    if (target._isVue || (ob && ob.vmCount)) {
+        warn('Avoid deleting properties on a Vue instance or its root $data ' +
+                '- just set it to null.');
+        return;
+    }
+    if (isReadonly(target)) {
+        warn(`Delete operation on key "${key}" failed: target is readonly.`);
+        return;
+    }
+    if (!hasOwn(target, key)) {
+        return;
+    }
+    delete target[key];
+    if (!ob) {
+        return;
+    }
+    {
+        ob.dep.notify({
+            type: "delete" /* TriggerOpTypes.DELETE */,
+            target: target,
+            key
+        });
+    }
 }
 /**
  * Collect dependencies on array elements when the array is touched, since
@@ -252,4 +274,4 @@ function dependArray(value) {
     }
 }
 
-export { Observer, defineReactive, observe, set, shouldObserve, toggleObserving };
+export { Observer, defineReactive, del, observe, set, shouldObserve, toggleObserving };

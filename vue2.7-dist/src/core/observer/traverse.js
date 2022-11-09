@@ -7,7 +7,6 @@ import VNode from '../vdom/vnode.js';
 import './array.js';
 import { isRef } from '../../v3/reactivity/ref.js';
 import './scheduler.js';
-import '../config.js';
 import '../instance/proxy.js';
 import '../util/perf.js';
 import '../vdom/create-functional-component.js';

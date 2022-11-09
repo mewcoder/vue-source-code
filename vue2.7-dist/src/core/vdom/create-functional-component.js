@@ -10,7 +10,6 @@ import '../util/env.js';
 import '../util/options.js';
 import '../util/debug.js';
 import { validateProp } from '../util/props.js';
-import '../config.js';
 import '../observer/dep.js';
 import '../util/next-tick.js';
 import '../observer/array.js';
@@ -113,7 +112,7 @@ function cloneAndMarkFunctionalResult(vnode, data, contextVm, options, renderCon
     const clone = cloneVNode(vnode);
     clone.fnContext = contextVm;
     clone.fnOptions = options;
-    if (process.env.NODE_ENV !== 'production') {
+    {
         (clone.devtoolsMeta = clone.devtoolsMeta || {}).renderContext =
             renderContext;
     }

@@ -18,7 +18,7 @@ function createCompileToFunctionFn(compile) {
         const warn$1 = options.warn || warn;
         delete options.warn;
         /* istanbul ignore if */
-        if (process.env.NODE_ENV !== 'production') {
+        {
             // detect possible CSP restriction
             try {
                 new Function('return 1');
@@ -43,7 +43,7 @@ function createCompileToFunctionFn(compile) {
         // compile
         const compiled = compile(template, options);
         // check compilation errors/tips
-        if (process.env.NODE_ENV !== 'production') {
+        {
             if (compiled.errors && compiled.errors.length) {
                 if (options.outputSourceRange) {
                     compiled.errors.forEach(e => {
@@ -77,7 +77,7 @@ function createCompileToFunctionFn(compile) {
         // this should only happen if there is a bug in the compiler itself.
         // mostly for codegen development use
         /* istanbul ignore if */
-        if (process.env.NODE_ENV !== 'production') {
+        {
             if ((!compiled.errors || !compiled.errors.length) && fnGenErrors.length) {
                 warn$1(`Failed to generate render function:\n\n` +
                     fnGenErrors

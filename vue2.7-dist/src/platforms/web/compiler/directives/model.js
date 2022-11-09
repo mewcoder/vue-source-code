@@ -1,4 +1,4 @@
-import '../../../../core/config.js';
+import config from '../../../../core/config.js';
 import { getBindingAttr, addProp, addHandler } from '../../../../compiler/helpers.js';
 import { genComponentModel, genAssignmentCode } from '../../../../compiler/directives/model.js';
 
@@ -6,13 +6,14 @@ let warn;
 // in some cases, the event used has to be determined at runtime
 // so we used some reserved tokens during compile.
 const RANGE_TOKEN = '__r';
+const CHECKBOX_RADIO_TOKEN = '__c';
 function model(el, dir, _warn) {
     warn = _warn;
     const value = dir.value;
     const modifiers = dir.modifiers;
     const tag = el.tag;
     const type = el.attrsMap.type;
-    if (process.env.NODE_ENV !== 'production') {
+    {
         // inputs with type="file" are read only and setting the input's
         // value will throw an error.
         if (tag === 'input' && type === 'file') {
@@ -37,10 +38,16 @@ function model(el, dir, _warn) {
     else if (tag === 'input' || tag === 'textarea') {
         genDefaultModel(el, value, modifiers);
     }
-    else {
+    else if (!config.isReservedTag(tag)) {
         genComponentModel(el, value, modifiers);
         // component v-model doesn't need extra runtime
         return false;
+    }
+    else {
+        warn(`<${el.tag} v-model="${value}">: ` +
+            `v-model is not supported on this element type. ` +
+            "If you are working with contenteditable, it's recommended to " +
+            'wrap a library dedicated for that purpose inside a custom component.', el.rawAttrsMap['v-model']);
     }
     // ensure runtime directive metadata
     return true;
@@ -87,7 +94,7 @@ function genDefaultModel(el, value, modifiers) {
     const type = el.attrsMap.type;
     // warn if v-bind:value conflicts with v-model
     // except for inputs with v-bind:type
-    if (process.env.NODE_ENV !== 'production') {
+    {
         const value = el.attrsMap['v-bind:value'] || el.attrsMap[':value'];
         const typeBinding = el.attrsMap['v-bind:type'] || el.attrsMap[':type'];
         if (value && !typeBinding) {
@@ -117,4 +124,4 @@ function genDefaultModel(el, value, modifiers) {
     }
 }
 
-export { RANGE_TOKEN, model as default };
+export { CHECKBOX_RADIO_TOKEN, RANGE_TOKEN, model as default };

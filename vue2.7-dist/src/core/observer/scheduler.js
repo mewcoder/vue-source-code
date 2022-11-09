@@ -1,16 +1,42 @@
-import '../config.js';
-import './dep.js';
+import config from '../config.js';
+import Dep, { cleanupDeps } from './dep.js';
+import { callHook, activateChildComponent } from '../instance/lifecycle.js';
 import '../../shared/util.js';
-import { inBrowser, isIE } from '../util/env.js';
+import { inBrowser, isIE, devtools } from '../util/env.js';
 import '../util/options.js';
-import '../util/debug.js';
+import { warn } from '../util/debug.js';
 import './array.js';
 import './traverse.js';
 import '../instance/proxy.js';
 import '../util/perf.js';
 import '../vdom/create-functional-component.js';
-import '../util/next-tick.js';
+import { nextTick } from '../util/next-tick.js';
 
+const MAX_UPDATE_COUNT = 100;
+const queue = [];
+const activatedChildren = [];
+let has = {};
+let circular = {};
+let waiting = false;
+let flushing = false;
+let index = 0;
+/**
+ * Reset the scheduler's state.
+ */
+function resetSchedulerState() {
+    index = queue.length = activatedChildren.length = 0;
+    has = {};
+    {
+        circular = {};
+    }
+    waiting = flushing = false;
+}
+// Async edge case #6566 requires saving the timestamp when event listeners are
+// attached. However, calling performance.now() has a perf overhead especially
+// if the page has thousands of event listeners. Instead, we take a timestamp
+// every time the scheduler flushes and use that for all event listeners
+// attached during that flush.
+let currentFlushTimestamp = 0;
 // Async edge case fix requires storing an event listener's attach timestamp.
 let getNow = Date.now;
 // Determine what event timestamp the browser is using. Annoyingly, the
@@ -31,6 +57,78 @@ if (inBrowser && !isIE) {
         getNow = () => performance.now();
     }
 }
+const sortCompareFn = (a, b) => {
+    if (a.post) {
+        if (!b.post)
+            return 1;
+    }
+    else if (b.post) {
+        return -1;
+    }
+    return a.id - b.id;
+};
+/**
+ * Flush both queues and run the watchers.
+ */
+function flushSchedulerQueue() {
+    currentFlushTimestamp = getNow();
+    flushing = true;
+    let watcher, id;
+    // Sort queue before flush.
+    // This ensures that:
+    // 1. Components are updated from parent to child. (because parent is always
+    //    created before the child)
+    // 2. A component's user watchers are run before its render watcher (because
+    //    user watchers are created before the render watcher)
+    // 3. If a component is destroyed during a parent component's watcher run,
+    //    its watchers can be skipped.
+    queue.sort(sortCompareFn);
+    // do not cache length because more watchers might be pushed
+    // as we run existing watchers
+    for (index = 0; index < queue.length; index++) {
+        watcher = queue[index];
+        if (watcher.before) {
+            watcher.before();
+        }
+        id = watcher.id;
+        has[id] = null;
+        watcher.run();
+        // in dev build, check and stop circular updates.
+        if (has[id] != null) {
+            circular[id] = (circular[id] || 0) + 1;
+            if (circular[id] > MAX_UPDATE_COUNT) {
+                warn('You may have an infinite update loop ' +
+                    (watcher.user
+                        ? `in watcher with expression "${watcher.expression}"`
+                        : `in a component render function.`), watcher.vm);
+                break;
+            }
+        }
+    }
+    // keep copies of post queues before resetting state
+    const activatedQueue = activatedChildren.slice();
+    const updatedQueue = queue.slice();
+    resetSchedulerState();
+    // call component updated and activated hooks
+    callActivatedHooks(activatedQueue);
+    callUpdatedHooks(updatedQueue);
+    cleanupDeps();
+    // devtool hook
+    /* istanbul ignore if */
+    if (devtools && config.devtools) {
+        devtools.emit('flush');
+    }
+}
+function callUpdatedHooks(queue) {
+    let i = queue.length;
+    while (i--) {
+        const watcher = queue[i];
+        const vm = watcher.vm;
+        if (vm && vm._watcher === watcher && vm._isMounted && !vm._isDestroyed) {
+            callHook(vm, 'updated');
+        }
+    }
+}
 /**
  * Queue a kept-alive component that was activated during patch.
  * The queue will be processed after the entire tree has been patched.
@@ -39,6 +137,49 @@ function queueActivatedComponent(vm) {
     // setting _inactive to false here so that a render function can
     // rely on checking whether it's in an inactive tree (e.g. router-view)
     vm._inactive = false;
+    activatedChildren.push(vm);
+}
+function callActivatedHooks(queue) {
+    for (let i = 0; i < queue.length; i++) {
+        queue[i]._inactive = true;
+        activateChildComponent(queue[i], true /* true */);
+    }
+}
+/**
+ * Push a watcher into the watcher queue.
+ * Jobs with duplicate IDs will be skipped unless it's
+ * pushed when the queue is being flushed.
+ */
+function queueWatcher(watcher) {
+    const id = watcher.id;
+    if (has[id] != null) {
+        return;
+    }
+    if (watcher === Dep.target && watcher.noRecurse) {
+        return;
+    }
+    has[id] = true;
+    if (!flushing) {
+        queue.push(watcher);
+    }
+    else {
+        // if already flushing, splice the watcher based on its id
+        // if already past its id, it will be run next immediately.
+        let i = queue.length - 1;
+        while (i > index && queue[i].id > watcher.id) {
+            i--;
+        }
+        queue.splice(i + 1, 0, watcher);
+    }
+    // queue the flush
+    if (!waiting) {
+        waiting = true;
+        if (!config.async) {
+            flushSchedulerQueue();
+            return;
+        }
+        nextTick(flushSchedulerQueue);
+    }
 }
 
-export { queueActivatedComponent };
+export { MAX_UPDATE_COUNT, currentFlushTimestamp, queueActivatedComponent, queueWatcher };

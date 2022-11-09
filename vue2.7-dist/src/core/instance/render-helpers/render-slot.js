@@ -6,7 +6,6 @@ import '../../observer/dep.js';
 import '../../observer/array.js';
 import '../../observer/traverse.js';
 import '../../observer/scheduler.js';
-import '../../config.js';
 import '../proxy.js';
 import '../../util/perf.js';
 import '../../vdom/create-functional-component.js';
@@ -22,7 +21,7 @@ function renderSlot(name, fallbackRender, props, bindObject) {
         // scoped slot
         props = props || {};
         if (bindObject) {
-            if (process.env.NODE_ENV !== 'production' && !isObject(bindObject)) {
+            if (!isObject(bindObject)) {
                 warn('slot v-bind without argument expects an Object', this);
             }
             props = extend(extend({}, bindObject), props);

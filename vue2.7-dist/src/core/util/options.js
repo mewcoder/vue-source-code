@@ -3,7 +3,7 @@ import { warn } from './debug.js';
 import { set } from '../observer/index.js';
 import { unicodeRegExp } from './lang.js';
 import { nativeWatch, hasSymbol } from './env.js';
-import { extend, isArray, isPlainObject, toRawType, isFunction, hasOwn, camelize, capitalize, isBuiltInTag } from '../../shared/util.js';
+import { extend, isArray, isPlainObject, toRawType, isFunction, hasOwn, isBuiltInTag, camelize, capitalize } from '../../shared/util.js';
 import { LIFECYCLE_HOOKS, ASSET_TYPES } from '../../shared/constants.js';
 
 /**
@@ -15,7 +15,7 @@ const strats = config.optionMergeStrategies;
 /**
  * Options with restrictions
  */
-if (process.env.NODE_ENV !== 'production') {
+{
     strats.el = strats.propsData = function (parent, child, vm, key) {
         if (!vm) {
             warn(`option "${key}" can only be used during instance ` +
@@ -94,8 +94,7 @@ function mergeDataOrFn(parentVal, childVal, vm) {
 strats.data = function (parentVal, childVal, vm) {
     if (!vm) {
         if (childVal && typeof childVal !== 'function') {
-            process.env.NODE_ENV !== 'production' &&
-                warn('The "data" option should be a function ' +
+            warn('The "data" option should be a function ' +
                     'that returns a per-instance value in component ' +
                     'definitions.', vm);
             return parentVal;
@@ -139,7 +138,7 @@ LIFECYCLE_HOOKS.forEach(hook => {
 function mergeAssets(parentVal, childVal, vm, key) {
     const res = Object.create(parentVal || null);
     if (childVal) {
-        process.env.NODE_ENV !== 'production' && assertObjectType(key, childVal, vm);
+        assertObjectType(key, childVal, vm);
         return extend(res, childVal);
     }
     else {
@@ -166,7 +165,7 @@ strats.watch = function (parentVal, childVal, vm, key) {
     /* istanbul ignore if */
     if (!childVal)
         return Object.create(parentVal || null);
-    if (process.env.NODE_ENV !== 'production') {
+    {
         assertObjectType(key, childVal, vm);
     }
     if (!parentVal)
@@ -191,7 +190,7 @@ strats.props =
         strats.inject =
             strats.computed =
                 function (parentVal, childVal, vm, key) {
-                    if (childVal && process.env.NODE_ENV !== 'production') {
+                    if (childVal && true) {
                         assertObjectType(key, childVal, vm);
                     }
                     if (!parentVal)
@@ -248,7 +247,7 @@ function normalizeProps(options, vm) {
                 name = camelize(val);
                 res[name] = { type: null };
             }
-            else if (process.env.NODE_ENV !== 'production') {
+            else {
                 warn('props must be strings when using array syntax.');
             }
         }
@@ -260,7 +259,7 @@ function normalizeProps(options, vm) {
             res[name] = isPlainObject(val) ? val : { type: val };
         }
     }
-    else if (process.env.NODE_ENV !== 'production') {
+    else {
         warn(`Invalid value for option "props": expected an Array or an Object, ` +
             `but got ${toRawType(props)}.`, vm);
     }
@@ -287,7 +286,7 @@ function normalizeInject(options, vm) {
                 : { from: val };
         }
     }
-    else if (process.env.NODE_ENV !== 'production') {
+    else {
         warn(`Invalid value for option "inject": expected an Array or an Object, ` +
             `but got ${toRawType(inject)}.`, vm);
     }
@@ -317,7 +316,7 @@ function assertObjectType(name, value, vm) {
  * Core utility used in both instantiation and inheritance.
  */
 function mergeOptions(parent, child, vm) {
-    if (process.env.NODE_ENV !== 'production') {
+    {
         checkComponents(child);
     }
     if (isFunction(child)) {
@@ -379,7 +378,7 @@ function resolveAsset(options, type, id, warnMissing) {
         return assets[PascalCaseId];
     // fallback to prototype chain
     const res = assets[id] || assets[camelizedId] || assets[PascalCaseId];
-    if (process.env.NODE_ENV !== 'production' && warnMissing && !res) {
+    if (warnMissing && !res) {
         warn('Failed to resolve ' + type.slice(0, -1) + ': ' + id);
     }
     return res;

@@ -4,13 +4,13 @@ const hasProto = '__proto__' in {};
 const inBrowser = typeof window !== 'undefined';
 const UA = inBrowser && window.navigator.userAgent.toLowerCase();
 const isIE = UA && /msie|trident/.test(UA);
-UA && UA.indexOf('msie 9.0') > 0;
+const isIE9 = UA && UA.indexOf('msie 9.0') > 0;
 const isEdge = UA && UA.indexOf('edge/') > 0;
 UA && UA.indexOf('android') > 0;
-UA && /iphone|ipad|ipod|ios/.test(UA);
+const isIOS = UA && /iphone|ipad|ipod|ios/.test(UA);
 UA && /chrome\/\d+/.test(UA) && !isEdge;
 UA && /phantomjs/.test(UA);
-UA && UA.match(/firefox\/(\d+)/);
+const isFF = UA && UA.match(/firefox\/(\d+)/);
 // Firefox has a "watch" function on Object.prototype...
 // @ts-expect-error firebox support
 const nativeWatch = {}.watch;
@@ -46,6 +46,8 @@ const isServerRendering = () => {
     }
     return _isServer;
 };
+// detect devtools
+const devtools = inBrowser && window.__VUE_DEVTOOLS_GLOBAL_HOOK__;
 /* istanbul ignore next */
 function isNative(Ctor) {
     return typeof Ctor === 'function' && /native code/.test(Ctor.toString());
@@ -77,4 +79,4 @@ else {
     };
 }
 
-export { UA, _Set, hasProto, hasSymbol, inBrowser, isEdge, isIE, isNative, isServerRendering, nativeWatch, supportsPassive };
+export { UA, _Set, devtools, hasProto, hasSymbol, inBrowser, isEdge, isFF, isIE, isIE9, isIOS, isNative, isServerRendering, nativeWatch, supportsPassive };

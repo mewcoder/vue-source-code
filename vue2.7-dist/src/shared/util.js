@@ -49,6 +49,9 @@ function toRawType(value) {
 function isPlainObject(obj) {
     return _toString.call(obj) === '[object Object]';
 }
+function isRegExp(v) {
+    return _toString.call(v) === '[object RegExp]';
+}
 /**
  * Check if val is a valid array index.
  */
@@ -100,6 +103,23 @@ const isBuiltInTag = makeMap('slot,component', true);
  */
 const isReservedAttribute = makeMap('key,ref,slot,slot-scope,is');
 /**
+ * Remove an item from an array.
+ */
+function remove(arr, item) {
+    const len = arr.length;
+    if (len) {
+        // fast path for the only / last item
+        if (item === arr[len - 1]) {
+            arr.length = len - 1;
+            return;
+        }
+        const index = arr.indexOf(item);
+        if (index > -1) {
+            return arr.splice(index, 1);
+        }
+    }
+}
+/**
  * Check whether an object has the property.
  */
 const hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -136,6 +156,43 @@ const hyphenateRE = /\B([A-Z])/g;
 const hyphenate = cached((str) => {
     return str.replace(hyphenateRE, '-$1').toLowerCase();
 });
+/**
+ * Simple bind polyfill for environments that do not support it,
+ * e.g., PhantomJS 1.x. Technically, we don't need this anymore
+ * since native bind is now performant enough in most browsers.
+ * But removing it would mean breaking code that was able to run in
+ * PhantomJS 1.x, so this must be kept for backward compatibility.
+ */
+/* istanbul ignore next */
+function polyfillBind(fn, ctx) {
+    function boundFn(a) {
+        const l = arguments.length;
+        return l
+            ? l > 1
+                ? fn.apply(ctx, arguments)
+                : fn.call(ctx, a)
+            : fn.call(ctx);
+    }
+    boundFn._length = fn.length;
+    return boundFn;
+}
+function nativeBind(fn, ctx) {
+    return fn.bind(ctx);
+}
+// @ts-expect-error bind cannot be `undefined`
+const bind = Function.prototype.bind ? nativeBind : polyfillBind;
+/**
+ * Convert an Array-like object to a real Array.
+ */
+function toArray(list, start) {
+    start = start || 0;
+    let i = list.length - start;
+    const ret = new Array(i);
+    while (i--) {
+        ret[i] = list[i + start];
+    }
+    return ret;
+}
 /**
  * Mix properties into target object.
  */
@@ -242,6 +299,18 @@ function looseIndexOf(arr, val) {
     }
     return -1;
 }
+/**
+ * Ensure a function is called only once.
+ */
+function once(fn) {
+    let called = false;
+    return function () {
+        if (!called) {
+            called = true;
+            fn.apply(this, arguments);
+        }
+    };
+}
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is#polyfill
 function hasChanged(x, y) {
     if (x === y) {
@@ -252,4 +321,4 @@ function hasChanged(x, y) {
     }
 }
 
-export { cached, camelize, capitalize, emptyObject, extend, genStaticKeys, hasChanged, hasOwn, hyphenate, identity, isArray, isBuiltInTag, isDef, isFalse, isFunction, isObject, isPlainObject, isPrimitive, isPromise, isReservedAttribute, isTrue, isUndef, isValidArrayIndex, looseEqual, looseIndexOf, makeMap, no, noop, toNumber, toObject, toRawType, toString };
+export { bind, cached, camelize, capitalize, emptyObject, extend, genStaticKeys, hasChanged, hasOwn, hyphenate, identity, isArray, isBuiltInTag, isDef, isFalse, isFunction, isObject, isPlainObject, isPrimitive, isPromise, isRegExp, isReservedAttribute, isTrue, isUndef, isValidArrayIndex, looseEqual, looseIndexOf, makeMap, no, noop, once, remove, toArray, toNumber, toObject, toRawType, toString };

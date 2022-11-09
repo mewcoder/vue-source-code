@@ -6,7 +6,6 @@ import '../../../core/observer/dep.js';
 import '../../../core/observer/array.js';
 import '../../../core/observer/traverse.js';
 import '../../../core/observer/scheduler.js';
-import '../../../core/config.js';
 import '../../../core/instance/proxy.js';
 import '../../../core/util/perf.js';
 import '../../../core/vdom/create-functional-component.js';

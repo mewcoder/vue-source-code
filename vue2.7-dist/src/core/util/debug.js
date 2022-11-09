@@ -7,13 +7,16 @@ let warn = noop;
 let tip = noop;
 let generateComponentTrace; // work around flow check
 let formatComponentName;
-if (process.env.NODE_ENV !== 'production') {
+{
     const hasConsole = typeof console !== 'undefined';
     const classifyRE = /(?:^|[-_])(\w)/g;
     const classify = str => str.replace(classifyRE, c => c.toUpperCase()).replace(/[-_]/g, '');
     warn = (msg, vm = currentInstance) => {
         const trace = vm ? generateComponentTrace(vm) : '';
-        if (hasConsole && !config.silent) {
+        if (config.warnHandler) {
+            config.warnHandler.call(null, msg, vm, trace);
+        }
+        else if (hasConsole && !config.silent) {
             console.error(`[Vue warn]: ${msg}${trace}`);
         }
     };

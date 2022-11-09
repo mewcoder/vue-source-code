@@ -12,7 +12,7 @@ function createCompilerCreator(baseCompile) {
                 (tip ? tips : errors).push(msg);
             };
             if (options) {
-                if (process.env.NODE_ENV !== 'production' && options.outputSourceRange) {
+                if (options.outputSourceRange) {
                     // $flow-disable-line
                     const leadingSpaceLength = template.match(/^\s*/)[0].length;
                     warn = (msg, range, tip) => {
@@ -45,7 +45,7 @@ function createCompilerCreator(baseCompile) {
             }
             finalOptions.warn = warn;
             const compiled = baseCompile(template.trim(), finalOptions);
-            if (process.env.NODE_ENV !== 'production') {
+            {
                 detectErrors(compiled.ast, warn);
             }
             compiled.errors = errors;

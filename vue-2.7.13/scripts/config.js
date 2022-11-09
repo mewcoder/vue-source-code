@@ -264,12 +264,12 @@ function genConfig(name) {
     ].concat(opts.plugins || []),
     output: {
       // file: opts.dest,
-      dir:'dist',
+      dir: 'dist',
       format: opts.format,
-      banner: opts.banner,
-      name: opts.moduleName || 'Vue',
+      // banner: opts.banner,
+      // name: opts.moduleName || 'Vue',
       preserveModules: opts.preserveModules || false,
-      exports: 'auto'
+      // exports: 'auto'
     },
     onwarn: (msg, warn) => {
       if (!/Circular/.test(msg)) {

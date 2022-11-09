@@ -142,8 +142,7 @@ function genOnce(el, state) {
             parent = parent.parent;
         }
         if (!key) {
-            process.env.NODE_ENV !== 'production' &&
-                state.warn(`v-once can only be used inside v-for that is keyed. `, el.rawAttrsMap['v-once']);
+            state.warn(`v-once can only be used inside v-for that is keyed. `, el.rawAttrsMap['v-once']);
             return genElement(el, state);
         }
         return `_o(${genElement(el, state)},${state.onceId++},${key})`;
@@ -181,8 +180,7 @@ function genFor(el, state, altGen, altHelper) {
     const alias = el.alias;
     const iterator1 = el.iterator1 ? `,${el.iterator1}` : '';
     const iterator2 = el.iterator2 ? `,${el.iterator2}` : '';
-    if (process.env.NODE_ENV !== 'production' &&
-        state.maybeComponent(el) &&
+    if (state.maybeComponent(el) &&
         el.tag !== 'slot' &&
         el.tag !== 'template' &&
         !el.key) {
@@ -307,7 +305,7 @@ function genDirectives(el, state) {
 }
 function genInlineTemplate(el, state) {
     const ast = el.children[0];
-    if (process.env.NODE_ENV !== 'production' && (el.children.length !== 1 || ast.type !== 1)) {
+    if ((el.children.length !== 1 || ast.type !== 1)) {
         state.warn('Inline-template components must have exactly one child element.', { start: el.start });
     }
     if (ast && ast.type === 1) {

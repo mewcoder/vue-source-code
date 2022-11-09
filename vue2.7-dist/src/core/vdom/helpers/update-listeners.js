@@ -6,7 +6,6 @@ import '../../observer/dep.js';
 import '../../observer/array.js';
 import '../../observer/traverse.js';
 import '../../observer/scheduler.js';
-import '../../config.js';
 import '../../instance/proxy.js';
 import '../../util/perf.js';
 import '../create-functional-component.js';
@@ -51,8 +50,7 @@ function updateListeners(on, oldOn, add, remove, createOnceHandler, vm) {
         old = oldOn[name];
         event = normalizeEvent(name);
         if (isUndef(cur)) {
-            process.env.NODE_ENV !== 'production' &&
-                warn(`Invalid handler for event "${event.name}": got ` + String(cur), vm);
+            warn(`Invalid handler for event "${event.name}": got ` + String(cur), vm);
         }
         else if (isUndef(old)) {
             if (isUndef(cur.fns)) {

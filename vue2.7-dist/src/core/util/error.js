@@ -1,4 +1,4 @@
-import '../config.js';
+import config from '../config.js';
 import { warn } from './debug.js';
 import { inBrowser } from './env.js';
 import { isPromise } from '../../shared/util.js';
@@ -48,10 +48,22 @@ function invokeWithErrorHandling(handler, context, args, vm, info) {
     return res;
 }
 function globalHandleError(err, vm, info) {
+    if (config.errorHandler) {
+        try {
+            return config.errorHandler.call(null, err, vm, info);
+        }
+        catch (e) {
+            // if the user intentionally throws the original error in the handler,
+            // do not log it twice
+            if (e !== err) {
+                logError(e, null, 'config.errorHandler');
+            }
+        }
+    }
     logError(err, vm, info);
 }
 function logError(err, vm, info) {
-    if (process.env.NODE_ENV !== 'production') {
+    {
         warn(`Error in ${info}: "${err.toString()}"`, vm);
     }
     /* istanbul ignore else */

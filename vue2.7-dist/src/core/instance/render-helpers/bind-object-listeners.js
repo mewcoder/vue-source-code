@@ -6,7 +6,6 @@ import '../../observer/dep.js';
 import '../../observer/array.js';
 import '../../observer/traverse.js';
 import '../../observer/scheduler.js';
-import '../../config.js';
 import '../proxy.js';
 import '../../util/perf.js';
 import '../../vdom/create-functional-component.js';
@@ -15,7 +14,7 @@ import '../../util/next-tick.js';
 function bindObjectListeners(data, value) {
     if (value) {
         if (!isPlainObject(value)) {
-            process.env.NODE_ENV !== 'production' && warn('v-on without argument expects an Object value', this);
+            warn('v-on without argument expects an Object value', this);
         }
         else {
             const on = (data.on = data.on ? extend({}, data.on) : {});

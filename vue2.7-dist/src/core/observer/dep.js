@@ -1,6 +1,15 @@
 import config from '../config.js';
 
 let uid = 0;
+const pendingCleanupDeps = [];
+const cleanupDeps = () => {
+    for (let i = 0; i < pendingCleanupDeps.length; i++) {
+        const dep = pendingCleanupDeps[i];
+        dep.subs = dep.subs.filter(s => s);
+        dep._pending = false;
+    }
+    pendingCleanupDeps.length = 0;
+};
 /**
  * A dep is an observable that can have multiple
  * directives subscribing to it.
@@ -24,12 +33,13 @@ class Dep {
         this.subs[this.subs.indexOf(sub)] = null;
         if (!this._pending) {
             this._pending = true;
+            pendingCleanupDeps.push(this);
         }
     }
     depend(info) {
         if (Dep.target) {
             Dep.target.addDep(this);
-            if (process.env.NODE_ENV !== 'production' && info && Dep.target.onTrack) {
+            if (info && Dep.target.onTrack) {
                 Dep.target.onTrack(Object.assign({ effect: Dep.target }, info));
             }
         }
@@ -37,7 +47,7 @@ class Dep {
     notify(info) {
         // stabilize the subscriber list first
         const subs = this.subs.filter(s => s);
-        if (process.env.NODE_ENV !== 'production' && !config.async) {
+        if (!config.async) {
             // subs aren't sorted in scheduler if not running async
             // we need to sort them now to make sure they fire in correct
             // order
@@ -45,7 +55,7 @@ class Dep {
         }
         for (let i = 0, l = subs.length; i < l; i++) {
             const sub = subs[i];
-            if (process.env.NODE_ENV !== 'production' && info) {
+            if (info) {
                 sub.onTrigger &&
                     sub.onTrigger(Object.assign({ effect: subs[i] }, info));
             }
@@ -67,4 +77,4 @@ function popTarget() {
     Dep.target = targetStack[targetStack.length - 1];
 }
 
-export { Dep as default, popTarget, pushTarget };
+export { cleanupDeps, Dep as default, popTarget, pushTarget };

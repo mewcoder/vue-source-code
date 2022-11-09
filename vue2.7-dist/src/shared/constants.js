@@ -1,3 +1,4 @@
+const SSR_ATTR = 'data-server-rendered';
 const ASSET_TYPES = ['component', 'directive', 'filter'];
 const LIFECYCLE_HOOKS = [
     'beforeCreate',
@@ -16,4 +17,4 @@ const LIFECYCLE_HOOKS = [
     'renderTriggered'
 ];
 
-export { ASSET_TYPES, LIFECYCLE_HOOKS };
+export { ASSET_TYPES, LIFECYCLE_HOOKS, SSR_ATTR };

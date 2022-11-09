@@ -18,8 +18,7 @@ import '../../util/next-tick.js';
 function bindObjectProps(data, tag, value, asProp, isSync) {
     if (value) {
         if (!isObject(value)) {
-            process.env.NODE_ENV !== 'production' &&
-                warn('v-bind without argument expects an Object or Array value', this);
+            warn('v-bind without argument expects an Object or Array value', this);
         }
         else {
             if (isArray(value)) {

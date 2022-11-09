@@ -1,24 +1,211 @@
-import '../config.js';
-import { emptyObject } from '../../shared/util.js';
+import config from '../config.js';
+import Watcher from '../observer/watcher.js';
+import { mark, measure } from '../util/perf.js';
+import { createEmptyVNode } from '../vdom/vnode.js';
+import { updateComponentListeners } from './events.js';
+import { resolveSlots } from './render-helpers/resolve-slots.js';
+import { toggleObserving } from '../observer/index.js';
+import { pushTarget, popTarget } from '../observer/dep.js';
+import { remove, noop, emptyObject } from '../../shared/util.js';
 import '../util/env.js';
 import '../util/options.js';
-import '../util/debug.js';
+import { warn } from '../util/debug.js';
 import { validateProp } from '../util/props.js';
 import { invokeWithErrorHandling } from '../util/error.js';
 import '../util/next-tick.js';
-import { toggleObserving } from '../observer/index.js';
-import '../observer/traverse.js';
-import '../observer/scheduler.js';
-import { pushTarget, popTarget } from '../observer/dep.js';
-import '../util/perf.js';
-import { updateComponentListeners } from './events.js';
-import { resolveSlots } from './render-helpers/resolve-slots.js';
 import { setCurrentInstance, currentInstance } from '../../v3/currentInstance.js';
 import { syncSetupProxy } from '../../v3/apiSetup.js';
 
 let activeInstance = null;
+let isUpdatingChildComponent = false;
+function setActiveInstance(vm) {
+    const prevActiveInstance = activeInstance;
+    activeInstance = vm;
+    return () => {
+        activeInstance = prevActiveInstance;
+    };
+}
+function initLifecycle(vm) {
+    const options = vm.$options;
+    // locate first non-abstract parent
+    let parent = options.parent;
+    if (parent && !options.abstract) {
+        while (parent.$options.abstract && parent.$parent) {
+            parent = parent.$parent;
+        }
+        parent.$children.push(vm);
+    }
+    vm.$parent = parent;
+    vm.$root = parent ? parent.$root : vm;
+    vm.$children = [];
+    vm.$refs = {};
+    vm._provided = parent ? parent._provided : Object.create(null);
+    vm._watcher = null;
+    vm._inactive = null;
+    vm._directInactive = false;
+    vm._isMounted = false;
+    vm._isDestroyed = false;
+    vm._isBeingDestroyed = false;
+}
+function lifecycleMixin(Vue) {
+    Vue.prototype._update = function (vnode, hydrating) {
+        const vm = this;
+        const prevEl = vm.$el;
+        const prevVnode = vm._vnode;
+        const restoreActiveInstance = setActiveInstance(vm);
+        vm._vnode = vnode;
+        // Vue.prototype.__patch__ is injected in entry points
+        // based on the rendering backend used.
+        if (!prevVnode) {
+            // initial render
+            vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */);
+        }
+        else {
+            // updates
+            vm.$el = vm.__patch__(prevVnode, vnode);
+        }
+        restoreActiveInstance();
+        // update __vue__ reference
+        if (prevEl) {
+            prevEl.__vue__ = null;
+        }
+        if (vm.$el) {
+            vm.$el.__vue__ = vm;
+        }
+        // if parent is an HOC, update its $el as well
+        let wrapper = vm;
+        while (wrapper &&
+            wrapper.$vnode &&
+            wrapper.$parent &&
+            wrapper.$vnode === wrapper.$parent._vnode) {
+            wrapper.$parent.$el = wrapper.$el;
+            wrapper = wrapper.$parent;
+        }
+        // updated hook is called by the scheduler to ensure that children are
+        // updated in a parent's updated hook.
+    };
+    Vue.prototype.$forceUpdate = function () {
+        const vm = this;
+        if (vm._watcher) {
+            vm._watcher.update();
+        }
+    };
+    Vue.prototype.$destroy = function () {
+        const vm = this;
+        if (vm._isBeingDestroyed) {
+            return;
+        }
+        callHook(vm, 'beforeDestroy');
+        vm._isBeingDestroyed = true;
+        // remove self from parent
+        const parent = vm.$parent;
+        if (parent && !parent._isBeingDestroyed && !vm.$options.abstract) {
+            remove(parent.$children, vm);
+        }
+        // teardown scope. this includes both the render watcher and other
+        // watchers created
+        vm._scope.stop();
+        // remove reference from data ob
+        // frozen object may not have observer.
+        if (vm._data.__ob__) {
+            vm._data.__ob__.vmCount--;
+        }
+        // call the last hook...
+        vm._isDestroyed = true;
+        // invoke destroy hooks on current rendered tree
+        vm.__patch__(vm._vnode, null);
+        // fire destroyed hook
+        callHook(vm, 'destroyed');
+        // turn off all instance listeners.
+        vm.$off();
+        // remove __vue__ reference
+        if (vm.$el) {
+            vm.$el.__vue__ = null;
+        }
+        // release circular reference (#6759)
+        if (vm.$vnode) {
+            vm.$vnode.parent = null;
+        }
+    };
+}
+function mountComponent(vm, el, hydrating) {
+    vm.$el = el;
+    if (!vm.$options.render) {
+        // @ts-expect-error invalid type
+        vm.$options.render = createEmptyVNode;
+        {
+            /* istanbul ignore if */
+            if ((vm.$options.template && vm.$options.template.charAt(0) !== '#') ||
+                vm.$options.el ||
+                el) {
+                warn('You are using the runtime-only build of Vue where the template ' +
+                    'compiler is not available. Either pre-compile the templates into ' +
+                    'render functions, or use the compiler-included build.', vm);
+            }
+            else {
+                warn('Failed to mount component: template or render function not defined.', vm);
+            }
+        }
+    }
+    callHook(vm, 'beforeMount');
+    let updateComponent;
+    /* istanbul ignore if */
+    if (config.performance && mark) {
+        updateComponent = () => {
+            const name = vm._name;
+            const id = vm._uid;
+            const startTag = `vue-perf-start:${id}`;
+            const endTag = `vue-perf-end:${id}`;
+            mark(startTag);
+            const vnode = vm._render();
+            mark(endTag);
+            measure(`vue ${name} render`, startTag, endTag);
+            mark(startTag);
+            vm._update(vnode, hydrating);
+            mark(endTag);
+            measure(`vue ${name} patch`, startTag, endTag);
+        };
+    }
+    else {
+        updateComponent = () => {
+            vm._update(vm._render(), hydrating);
+        };
+    }
+    const watcherOptions = {
+        before() {
+            if (vm._isMounted && !vm._isDestroyed) {
+                callHook(vm, 'beforeUpdate');
+            }
+        }
+    };
+    {
+        watcherOptions.onTrack = e => callHook(vm, 'renderTracked', [e]);
+        watcherOptions.onTrigger = e => callHook(vm, 'renderTriggered', [e]);
+    }
+    // we set this to vm._watcher inside the watcher's constructor
+    // since the watcher's initial patch may call $forceUpdate (e.g. inside child
+    // component's mounted hook), which relies on vm._watcher being already defined
+    new Watcher(vm, updateComponent, noop, watcherOptions, true /* isRenderWatcher */);
+    hydrating = false;
+    // flush buffer for flush: "pre" watchers queued in setup()
+    const preWatchers = vm._preWatchers;
+    if (preWatchers) {
+        for (let i = 0; i < preWatchers.length; i++) {
+            preWatchers[i].run();
+        }
+    }
+    // manually mounted instance, call mounted on self
+    // mounted is called for render-created child components in its inserted hook
+    if (vm.$vnode == null) {
+        vm._isMounted = true;
+        callHook(vm, 'mounted');
+    }
+    return vm;
+}
 function updateChildComponent(vm, propsData, listeners, parentVnode, renderChildren) {
-    if (process.env.NODE_ENV !== 'production') ;
+    {
+        isUpdatingChildComponent = true;
+    }
     // determine whether component has slot children
     // we need to do this before overwriting $options._renderChildren.
     // check if there are dynamic scopedSlots (hand-written or compiled but with
@@ -83,7 +270,9 @@ function updateChildComponent(vm, propsData, listeners, parentVnode, renderChild
         vm.$slots = resolveSlots(renderChildren, parentVnode.context);
         vm.$forceUpdate();
     }
-    if (process.env.NODE_ENV !== 'production') ;
+    {
+        isUpdatingChildComponent = false;
+    }
 }
 function isInInactiveTree(vm) {
     while (vm && (vm = vm.$parent)) {
@@ -144,4 +333,4 @@ function callHook(vm, hook, args, setContext = true) {
     popTarget();
 }
 
-export { activateChildComponent, activeInstance, callHook, deactivateChildComponent, updateChildComponent };
+export { activateChildComponent, activeInstance, callHook, deactivateChildComponent, initLifecycle, isUpdatingChildComponent, lifecycleMixin, mountComponent, setActiveInstance, updateChildComponent };
