@@ -115,6 +115,14 @@ const builds = {
     env: 'production',
     banner
   },
+  debug: {
+    entry: resolve('web/entry-runtime-with-compiler.ts'),
+    preserveModules: true,
+    format: 'es',
+    env: 'development',
+    alias: { he: './entity-decoder' },
+    banner
+  },
   // Runtime+compiler development build (Browser)
   'full-dev': {
     entry: resolve('web/entry-runtime-with-compiler.ts'),
@@ -203,10 +211,11 @@ const builds = {
   'compiler-sfc': {
     entry: resolve('packages/compiler-sfc/src/index.ts'),
     dest: resolve('packages/compiler-sfc/dist/compiler-sfc.js'),
-    format: 'cjs',
-    external: Object.keys(
-      require('../packages/compiler-sfc/package.json').dependencies
-    ),
+    format: 'es',
+    preserveModules: true,
+    // external: Object.keys(
+    //   require('../packages/compiler-sfc/package.json').dependencies
+    // ),
     plugins: [
       node({ preferBuiltins: true }),
       cjs({
@@ -246,7 +255,7 @@ function genConfig(name) {
           compilerOptions: {
             // if targeting browser, target es5
             // if targeting node, es2017 means Node 8
-            target: isTargetingBrowser ? 'es5' : 'es2017'
+            target: isTargetingBrowser ? 'es2017' : 'es2017'
           },
           include: isTargetingBrowser ? ['src'] : ['src', 'packages/*/src'],
           exclude: ['test', 'test-dts']
@@ -254,10 +263,12 @@ function genConfig(name) {
       })
     ].concat(opts.plugins || []),
     output: {
-      file: opts.dest,
+      // file: opts.dest,
+      dir:'dist',
       format: opts.format,
       banner: opts.banner,
       name: opts.moduleName || 'Vue',
+      preserveModules: opts.preserveModules || false,
       exports: 'auto'
     },
     onwarn: (msg, warn) => {

@@ -1,5 +1,5 @@
-# vue-source-code
-Vue全家桶源码学习
+# vue-source-debug
+Vue源码学习
 
 > 仓库地址
 > - [vue2](https://github.com/vuejs/vue)

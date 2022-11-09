@@ -35,6 +35,8 @@
   },
   "sideEffects": false,
   "scripts": {
+    "debug": "rollup -c scripts/config.js --environment TARGET:debug",
+    "sfc": "rollup -c scripts/config.js --environment TARGET:compiler-sfc",
     "dev": "rollup -w -c scripts/config.js --environment TARGET:full-dev",
     "dev:cjs": "rollup -w -c scripts/config.js --environment TARGET:runtime-cjs-dev",
     "dev:esm": "rollup -w -c scripts/config.js --environment TARGET:runtime-esm",
