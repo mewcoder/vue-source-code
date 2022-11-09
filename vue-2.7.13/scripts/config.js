@@ -117,8 +117,8 @@ const builds = {
   },
   debug: {
     entry: resolve('web/entry-runtime-with-compiler.ts'),
-    preserveModules: true,
-    format: 'es',
+    // preserveModules: true,
+    format: 'esm',
     env: 'development',
     alias: { he: './entity-decoder' },
     banner

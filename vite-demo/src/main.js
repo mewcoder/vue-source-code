@@ -1,5 +1,5 @@
-// import Vue from './dist/platforms/web/entry-runtime-esm'
-import Vue from 'vue'
+import Vue from './vue2.7'
+// import Vue from 'vue'
 import App from './App.vue'
 
 import './assets/main.css'
